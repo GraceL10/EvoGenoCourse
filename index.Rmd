@@ -1,0 +1,16 @@
+---
+title: "Index"
+author: "Grace Lawson"
+date: "Fall 2020"
+output: 
+  html_document:
+    theme: cerulean 
+bibliography: references.bib
+---
+
+# Labs 
+[Lab 1](Lawson_Lab1.html)
+
+Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
+
+# References

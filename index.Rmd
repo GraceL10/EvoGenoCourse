@@ -9,7 +9,9 @@ bibliography: references.bib
 ---
 
 # Labs 
-[Lab 1](Lawson_Lab1.html)
+  [Lab 1](Lawson_Lab1.html)
+
+  [Lab 2](lab2_lab1wreferences.html)
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 

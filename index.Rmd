@@ -12,6 +12,10 @@ bibliography: references.bib
   [Lab 1](Lawson_Lab1.html)
 
   [Lab 2](lab2_lab1wreferences.html)
+  
+  [Lab 3A](Lab_3A.html)
+ 
+  [Lab 3B](Lab_3B.html)
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 

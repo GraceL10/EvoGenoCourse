@@ -1,0 +1,262 @@
+---
+title: "Lab 3A: Starting with data"
+author: "Grace Lawson"
+date: "9.7.20"
+output: html_document
+---
+
+```{r, eval = FALSE}
+library("tidyverse")
+```
+
+
+```{r, eval = FALSE}
+download.file(url = "https://ndownloader.figshare.com/files/2292169",
+              destfile = "data/portal_data_joined.csv")
+```
+
+# Load data
+```{r}
+surveys <- read.csv("data/portal_data_joined.csv")
+
+# View data
+head(surveys)
+str(surveys)
+```
+
+
+# Inspecting data.frame Objects
+```{r}
+# Size
+dim(surveys)
+nrow(surveys)
+ncol(surveys)
+```
+
+```{r}
+# Content
+head(surveys)
+tail(surveys)
+```
+
+```{r, results = "hide"}
+# Names
+names(surveys)
+rownames(surveys)
+```
+
+```{r}
+# Summary
+str(surveys)
+summary(surveys)
+```
+
+### Challenge
+```{r}
+# class = data frame
+# rows = 34786, columns = 13
+# species = 48
+```
+
+# Indexing and subsetting data frames
+```{r, results = "hide"}
+# first element in the first column of the data frame (as a vector)
+surveys[1, 1]   
+# first element in the 6th column (as a vector)
+surveys[1, 6]   
+# first column of the data frame (as a vector)
+surveys[, 1]    
+# first column of the data frame (as a data.frame)
+surveys[1]      
+# first three elements in the 7th column (as a vector)
+surveys[1:3, 7] 
+# the 3rd row of the data frame (as a data.frame)
+surveys[3, ]    
+# equivalent to head_surveys <- head(surveys)
+head_surveys <- surveys[1:6, ] 
+```
+
+```{r, results = "hide"}
+surveys[, -1] # The whole data frame, except the first column
+surveys[-(7:34786), ] # Equivalent to head(surveys)
+```
+
+```{r, results = "hide"}
+surveys["species_id"]       # Result is a data.frame
+surveys[, "species_id"]     # Result is a vector
+surveys[["species_id"]]     # Result is a vector
+surveys$species_id          # Result is a vector
+```
+
+### Challenge
+```{r}
+# 1
+surveys_200 <- surveys[200,]
+```
+
+```{r}
+# 2
+surveys[34786,]
+tail(surveys)
+surveys[nrow(surveys),]
+surveys_last <- surveys[34786,]
+```
+
+```{r}
+# 3 
+surveys_middle <- surveys[nrow(surveys) / 2 ,]
+```
+
+```{r}
+# 4
+surveys_head <- surveys[-(7:nrow(surveys)), ]
+```
+
+# Factors
+```{r}
+# Examples
+sex <- factor(c("male", "female", "female", "male"))
+levels(sex)
+nlevels(sex)
+```
+
+```{r}
+# Levels in sex vector
+sex # current order
+```
+
+```{r}
+sex <- factor(sex, levels = c("male", "female"))
+sex # after re-ordering
+```
+
+## Converting factors 
+```{r}
+as.character(sex)
+```
+
+```{r}
+# factor to numeric 
+year_fct <- factor(c(1990, 1983, 1977, 1998, 1990))
+as.numeric(year_fct) # Wrong! And there is no warning...
+as.numeric(as.character(year_fct)) # Works...
+as.numeric(levels(year_fct))[year_fct]    # The recommended way.
+```
+
+## Renaming factors
+```{r}
+## bar plot of the number of females and males captured during the experiment:
+plot(as.factor(surveys$sex))
+```
+
+```{r}
+# adding label for undetermined sex
+sex <- factor(surveys$sex)
+head(sex)
+```
+
+```{r}
+levels(sex)
+```
+
+```{r}
+levels(sex)[1] <- "undetermined"
+levels(sex)
+```
+
+```{r}
+head(sex)
+```
+
+### Challenge
+```{r}
+# rename "F" and "M"
+levels(sex)[2] <- "female"
+levels(sex)[3] <- "male"
+head(sex)
+```
+
+```{r}
+# barplot
+sex <- factor(sex, levels = c("female", "male", "undetermined"))
+plot(as.factor(sex))
+```
+
+## Using stringsAsFactors = FALSE
+```{r}
+## Compare the difference between our data read as `factor` vs `character`.
+surveys <- read.csv("data/portal_data_joined.csv", stringsAsFactors = TRUE)
+str(surveys)
+```
+
+```{r}
+surveys <- read.csv("data/portal_data_joined.csv", stringsAsFactors = FALSE)
+str(surveys)
+```
+
+```{r}
+## Convert the column "plot_type" into a factor
+surveys$plot_type <- factor(surveys$plot_type)
+```
+
+### Challenge
+```{r}
+# 1
+animal_data <- data.frame(
+          animal = c("dog", "cat", "sea cucumber", "sea urchin"),
+          feel = c("furry", "furry", "squishy", "spiny"),
+          weight = c(45, 8, 1.1, 0.8))
+```
+
+```{r}
+# 2
+country_climate <- data.frame(
+       country = c("Canada", "Panama", "South Africa", "Australia"),
+       climate = c("cold", "hot", "temperate", "hot/temperate"),
+       temperature = c(10, 30, 18, 15),
+       northern_hemisphere = c(TRUE, TRUE, FALSE, FALSE),
+       has_kangaroo = c(FALSE, FALSE, FALSE, TRUE)
+       )
+```
+
+# Formatting Dates
+```{r}
+str(surveys)
+```
+
+```{r}
+library("lubridate")
+```
+
+```{r}
+# Create date object
+my_date <- ymd("2015-01-01")
+str(my_date)
+```
+
+```{r}
+# sep indicates the character to use to separate each component
+my_date <- ymd(paste("2015", "1", "1", sep = "-")) 
+str(my_date)
+```
+
+```{r, results = "hide"}
+# apply date function to surveys 
+paste(surveys$year, surveys$month, surveys$day, sep = "-")
+ymd(paste(surveys$year, surveys$month, surveys$day, sep = "-"))
+surveys$date <- ymd(paste(surveys$year, surveys$month, surveys$day, sep = "-"))
+```
+
+```{r}
+str(surveys)
+```
+
+```{r}
+summary(surveys$date)
+```
+
+```{r}
+missing_dates <- surveys[is.na(surveys$date), c("year", "month", "day")]
+head(missing_dates)
+```
+

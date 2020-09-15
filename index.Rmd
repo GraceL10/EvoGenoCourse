@@ -16,6 +16,10 @@ bibliography: references.bib
   [Lab 3A](Lab_3A.html)
  
   [Lab 3B](Lab_3B.html)
+  
+  [Lab 4A: Data visualization exercises](Lab_4a.html)
+  
+  [Lab 4](Lab_4.html)
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 

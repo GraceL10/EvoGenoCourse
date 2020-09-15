@@ -1,0 +1,228 @@
+---
+title: "Lab 4: "
+author: "Grace Lawson"
+date: "9.14.20"
+output: html_document
+---
+
+```{r}
+library("tidyverse")
+```
+
+```{r}
+report_03_11_2020 <- read_csv(url("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/03-11-2020.csv")) %>% 
+  rename(Country_Region = "Country/Region", Province_State = "Province/State")
+report_09_13_2020 <- read_csv(url("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/09-13-2020.csv"))
+```
+
+```{r}
+str(report_03_11_2020)
+```
+
+
+```{r}
+library(DT)
+datatable(report_03_11_2020)
+```
+
+# Exercises Part 1
+```{r}
+#1
+str(report_03_11_2020)
+```
+
+```{r}
+str(report_09_13_2020)
+```
+
+```{r}
+#2 
+report_09_13_2020_countries <- report_09_13_2020 %>% 
+  group_by(Country_Region) %>% 
+  summarize(Total_cases = sum(Confirmed, na.rm = TRUE))
+
+head(report_09_13_2020_countries)
+```
+
+```{r}
+#3
+report_09_13_2020_US <- report_09_13_2020 %>% 
+  filter(Country_Region == "US") %>% 
+  group_by(Province_State) %>% 
+  summarize(Total_cases = sum(Confirmed, na.rm = TRUE))
+
+head(report_09_13_2020_US)
+```
+
+```{r}
+#4
+report_09_13_2020_top_deaths <- report_09_13_2020 %>% 
+  group_by(Country_Region) %>% 
+  summarize(Deaths = sum(Deaths)) %>% 
+  arrange(desc(), Deaths)
+slice_head(report_09_13_2020_top_deaths, n = 10)
+```
+
+# Exercises Part 2
+
+```{r}
+report_03_12_2020 <- read_csv(url("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/03-12-2020.csv")) %>% 
+  rename(Country_Region = "Country/Region", Province_State = "Province/State")
+report_09_12_2020 <- read_csv(url("https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/09-12-2020.csv"))
+```
+
+```{r}
+report_09_12_2020_top_deaths <- report_09_12_2020 %>% 
+  group_by(Country_Region) %>% 
+  summarize(Cases = sum(Confirmed), Deaths = sum(Deaths)) %>% 
+  arrange(desc(), Deaths)
+top10_deaths_09_12_2020 <-slice_head(report_09_12_2020_top_deaths, n = 10)
+top10_deaths_09_12_2020
+```
+
+```{r}
+report_03_12_2020_top_deaths <- report_03_12_2020 %>% 
+  group_by(Country_Region) %>% 
+  summarize(Cases = sum(Confirmed), Deaths = sum(Deaths)) %>% 
+  arrange(desc(), Deaths)
+top10_deaths_03_12_2020 <- slice_head(report_03_12_2020_top_deaths, n = 10)
+top10_deaths_03_12_2020
+```
+
+```{r}
+#5
+library(gridExtra)
+
+# Cases graph 03_12_2020
+top10_deaths_cases_03_12_2020 <- ggplot(data = top10_deaths_03_12_2020,
+        mapping = aes(x = reorder(Country_Region, -Deaths), y = Cases)) + 
+  geom_point() +
+  labs(title = "Confirmed COVID-19 cases as of 03/12/2020",
+       x = "Country/Region",
+       y = "Number of cases") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+# Deaths graph 03_12_2020
+top10_deaths_deaths_03_12_2020 <- ggplot(data = top10_deaths_03_12_2020,
+        mapping = aes(x = reorder(Country_Region, -Deaths), y = Deaths)) + 
+  geom_point() +
+  labs(title = "Confirmed COVID-19 deaths as of 03/12/2020",
+       x = "Country/Region",
+       y = "Number of deaths") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+grid.arrange(top10_deaths_cases_03_12_2020, top10_deaths_deaths_03_12_2020, ncol = 2)
+```
+
+
+```{r}
+# Cases graph 09_12_2020
+top10_deaths_cases_09_12_2020 <- ggplot(data = top10_deaths_09_12_2020,
+        mapping = aes(x = reorder(Country_Region, -Deaths), y = Cases)) + 
+  geom_point() +
+  labs(title = "Confirmed COVID-19 cases as of 09/12/2020",
+       x = "Country/Region",
+       y = "Number of cases") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+# Deaths graph 09_12_2020
+top10_deaths_deaths_09_12_2020 <- ggplot(data = top10_deaths_09_12_2020,
+        mapping = aes(x = reorder(Country_Region, -Deaths), y = Deaths)) + 
+  geom_point() +
+  labs(title = "Confirmed COVID-19 deaths as of 09/12/2020",
+       x = "Country/Region",
+       y = "Number of deaths") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+grid.arrange(top10_deaths_cases_09_12_2020, top10_deaths_deaths_09_12_2020, ncol = 2)
+```
+
+```{r}
+#6
+report_09_12_2020_top_deaths_states <- report_09_12_2020 %>% 
+  filter(Country_Region == "US") %>% 
+  group_by(Province_State) %>% 
+  summarize(Cases = sum(Confirmed), Deaths = sum(Deaths)) %>% 
+  arrange(desc(), Deaths)
+
+top10_US_deaths_09_12_2020 <-slice_head(report_09_12_2020_top_deaths_states, n = 10)
+top10_US_deaths_09_12_2020
+
+report_03_12_2020_top_deaths_states <- report_03_12_2020 %>% 
+  filter(Country_Region == "US") %>% 
+  group_by(Province_State) %>% 
+  summarize(Cases = sum(Confirmed), Deaths = sum(Deaths)) %>% 
+  arrange(desc(), Deaths)
+
+top10_US_deaths_03_12_2020 <-slice_head(report_03_12_2020_top_deaths_states, n = 10)
+top10_US_deaths_03_12_2020
+```
+
+```{r}
+# Cases graph US States 09_12_2020
+top10_US_deaths_cases_09_12_2020 <- ggplot(data = top10_US_deaths_09_12_2020,
+        mapping = aes(x = reorder(Province_State, -Deaths), y = Cases)) + 
+  geom_bar(stat = 'identity') +
+  labs(title = "Confirmed COVID-19 cases as of 09/12/2020",
+       x = "State",
+       y = "Number of cases") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+# Deaths graph US States 09_12_2020
+top10_US_deaths_deaths_09_12_2020 <- ggplot(data = top10_US_deaths_09_12_2020,
+        mapping = aes(x = reorder(Province_State, -Deaths), y = Deaths)) + 
+  geom_bar(stat = 'identity') +
+  labs(title = "Confirmed COVID-19 deaths as of 09/12/2020",
+       x = "State",
+       y = "Number of deaths") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+grid.arrange(top10_US_deaths_cases_09_12_2020, top10_US_deaths_deaths_09_12_2020, ncol = 2)
+```
+
+```{r}
+# Cases graph US States 03_12_2020
+top10_US_deaths_cases_03_12_2020 <- ggplot(data = top10_US_deaths_03_12_2020,
+        mapping = aes(x = reorder(Province_State, -Deaths), y = Cases)) + 
+  geom_bar(stat = 'identity') +
+  labs(title = "Confirmed COVID-19 cases as of 03/12/2020",
+       x = "State",
+       y = "Number of cases") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+# Deaths graph US States 03_12_2020
+top10_US_deaths_deaths_03_12_2020 <- ggplot(data = top10_US_deaths_03_12_2020,
+        mapping = aes(x = reorder(Province_State, -Deaths), y = Deaths)) + 
+  geom_bar(stat = 'identity') +
+  labs(title = "Confirmed COVID-19 deaths as of 03/12/2020",
+       x = "State",
+       y = "Number of deaths") +
+  theme_bw() +
+  theme(axis.text.x = element_text(color = "black", size = 8, angle = 60, hjust = 0, vjust = 0),
+                      axis.text.y = element_text(color = "black", size = 8),
+                      text = element_text(size = 8))
+
+grid.arrange(top10_US_deaths_cases_03_12_2020, top10_US_deaths_deaths_03_12_2020, ncol = 2)
+```
+

@@ -9,6 +9,7 @@ bibliography: references.bib
 ---
 
 # Labs 
+
   [Lab 1](Lawson_Lab1.html)
 
   [Lab 2](lab2_lab1wreferences.html)
@@ -21,6 +22,8 @@ bibliography: references.bib
   
   [Lab 4](Lab_4.html)
 
+  [Lab 5A](Lab_5a.html)
+  
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 
 # References

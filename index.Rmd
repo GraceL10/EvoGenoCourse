@@ -24,7 +24,8 @@ bibliography: references.bib
 
   [Lab 5A](Lab_5a.html) 
   
-  [Lab 5B](Lab_5B.html) 
+  [Lab 5B](Lab_5B.html)  
+  
   
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 

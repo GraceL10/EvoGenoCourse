@@ -8,7 +8,7 @@ output:
 bibliography: references.bib
 ---
 
-# Labs 
+# Labs  
 
   [Lab 1](Lawson_Lab1.html)
 

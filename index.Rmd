@@ -29,6 +29,10 @@ bibliography: references.bib
   [Lab 6A: Mapping COVID-19 Data](Lab_6.html)
   
   [Lab 7: RNASeq Workflow](Lab_7.html)
+  
+  [Lab 8: Phylogenetic Trees](Lab_8.html)
+
+
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 
 # References

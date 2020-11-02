@@ -31,6 +31,10 @@ bibliography: references.bib
   [Lab 7: RNASeq Workflow](Lab_7.html)
   
   [Lab 8: Phylogenetic Trees](Lab_8.html)
+  
+  [Lab 9a: Regular Expressions](Lab_9a.html)
+  
+  [Lab 9x: Control Structures and Functions](Lab_9b.html)
 
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].

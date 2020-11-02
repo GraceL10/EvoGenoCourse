@@ -34,9 +34,9 @@ bibliography: references.bib
   
   [Lab 9a: Regular Expressions](Lab_9a.html)
   
-  [Lab 9x: Control Structures and Functions](Lab_9b.html)
+  [Lab 9x: Control Structures and Functions](Lab_9b.html) 
 
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 
-# References
+### References

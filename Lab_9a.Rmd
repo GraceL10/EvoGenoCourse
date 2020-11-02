@@ -1,0 +1,416 @@
+---
+title: "Lab_9"
+author: Grace Lawson
+date: 10.26.2020
+output: html_document
+---
+
+```{r}
+library(stringr)
+library(tidyverse)
+```
+
+# Matching patterns with regular expressions
+## Basic matches
+Simplest patterns match exact strings
+```{r}
+x <- c("apple", "banana", "pear")
+str_view(x, "an")
+```
+"." matches any character except a new line
+```{r}
+str_view(x, ".a.")
+```
+- this only shows the first match in a string
+
+To find an actual period, use a double backslash (ex - period = "\\.")
+```{r}
+dot <- "\\."
+writeLines(dot)
+```
+
+```{r}
+x <- c("abc", "a.c", "bef")
+str_view(x, "a\\.c")
+```
+
+To find an actual backslash, use four backslashes (ex \ = \\\\)
+```{r}
+x <- "a\\b"
+writeLines(x)
+```
+
+```{r}
+str_view(x, "\\\\")
+```
+
+### Exercises
+1. Explain why each of these strings don't match a "\":
+"\" - this is an escape for special behavior, not a regular expression for \
+"\\" - this escapes the special behavior of \, but does not then recognize the character \
+"\\\" - this escapes the special behavior of \, then has the string \, but doesn't escape the third backslash's special behavior
+
+## Anchors
+Regular expressions match any part of a string - can use anchors to direct it to match start or end of the string
+```{r}
+# Match start of the string with ^
+x <- c("apple", "banana", "pear")
+str_view(x, "^a")
+```
+
+```{r}
+# Match end of the string with $
+str_view(x, "a$")
+```
+
+To force regular expression to match a complete string use both ^ and $
+```{r}
+x <- c("apple pie", "apple", "apple cake")
+str_view(x, "apple")
+```
+
+```{r}
+str_view(x, "^apple$")
+```
+
+### Exercises
+1. How would you match the string "$^$"?
+- str_view(x, "^$^$$")
+
+## Character classes and alternatives
+```{r}
+# Look for a literal character that normally has a special regex meaning
+x <- c("abc", "a.c", "a*c", "a c")
+str_view(x, "a[.]c")
+```
+```{r}
+str_view(x, ".[*]c")
+```
+```{r}
+str_view(x, "a[ ]")
+```
+
+```{r}
+x <- c("grey", "gray")
+str_view(x, "gr(e|a)y")
+```
+
+### Exercises
+1. Regex that:
+- Start with a vowel = "^[aeiou]."
+- Only contain consonants = "[aeiou]", negate = TRUE
+- End with -ed but not -eed = "[^e]ed$"
+- End with -ing or -ise = "i(ng|se)$"
+
+## Repetition
+Need to control how many times a pattern matches:
+- ? = 0 or 1
+- + = 1+
+- * = 0+
+
+```{r}
+x <- "1888 is the longest year in Roman numerals: MDCCCLXXXVIII"
+str_view(x, "CC?")
+```
+```{r}
+str_view(x, "CC+")
+```
+```{r}
+str_view(x, "C[LX]+")
+```
+
+Can also specify number of matches exactly:
+- {n} = exactly n
+- {n,} = n or more
+- {,m} = at most, m
+- {n,m} = between n and m
+
+```{r}
+str_view(x, "C{2}")
+```
+```{r}
+str_view(x, "C{2,}")
+```
+
+To make these searches match the shortest string possible instead of the longest put a "?" after 
+```{r}
+str_view(x, "C{2,3}?")
+```
+```{r}
+str_view(x, "C[LX]+?")
+```
+
+### Exercises
+1. Describe the equivalents of ?,+,* in {m,n} form
+- ? = {0,1}
+- + = {1,}
+- * = {0,}
+
+## Grouping and backreferences
+Parantheses create a numbered capturing group (number 1,2 etc). 
+- Capturing group = stores part of string matched by the part of the regular expression inside parantheses. 
+- Refer to the same text as previously matched using backreferences (\1, \2, etc)
+```{r}
+str_view(fruit, "(..)\\1", match = TRUE)
+```
+
+### Exercises
+1. Describe what these expressions will match:
+- (.)\1\1
+    a character repeated 3 times in a row
+- "(.)(.)\\2\\1"
+    2 characters repeated in the opposite order
+- (..)\1
+    2 characters repeated
+- "(.).\\1.\\1"
+    character 1 followed by any character, then character 1, then any character, then character 1
+- "(.)(.)(.).*\\3\\2\\1"
+    3 characters, then some number of characters, then the former 3 in reverse order
+    
+# Tools
+## Detect matches
+To determine if character vector matches a pattern use str_detect() 
+```{r}
+x <- c("apple", "banana", "pear")
+str_detect(x, "e")
+```
+
+```{r}
+# How many common words start with "t"?
+sum(str_detect(words, "^t"))
+```
+
+```{r}
+# What proportion of common words end with a vowel?
+mean(str_detect(words, "[aeiou]$"))
+```
+
+When there are more complex conditions, combine calls with logical operators instead of creating a single regular expression
+
+Example - find words that not don't have any vowels
+```{r}
+# Find all words containing at least one vowel, then negate
+no_vowels_1 <- !str_detect(words, "[aeiou]")
+```
+
+```{r}
+# Find all words consisting only of consonants 
+no_vowels_2 <- str_detect(words, "^[^aeiou]+$")
+identical(no_vowels_1, no_vowels_2)
+```
+
+Select elements that match a pattern - can use logical subsetting or str_subset()
+```{r}
+words[str_detect(words, "x$")]
+```
+
+```{r}
+str_subset(words, "x$")
+```
+
+For data frames - use filter
+```{r}
+df <- tibble(
+    word = words,
+    i = seq_along(word)
+)
+df %>% 
+    filter(str_detect(word, "x$"))
+```
+
+str_count() tells how many matches there are in a string
+```{r}
+x <- c("apple", "banana", "pear")
+str_count(x, "a")
+```
+
+```{r}
+# On average, how many vowels per word?
+mean(str_count(words, "[aeiou]"))
+```
+
+Use str_count() with mutate():
+```{r}
+df %>% 
+    mutate(
+        vowels = str_count(word, "[aeiou]"),
+        consonants = str_count(word, "[^aeiou]")
+    )
+```
+
+### Exercises
+1. Find all words that start or end with x
+Single regular expression
+```{r}
+words[str_detect(words, "^x|x$")]
+```
+Combination of str_detect() calls
+```{r}
+start_w_x <- str_detect(words, "^x")
+end_w_x <- str_detect(words, "x$")
+words[start_w_x | end_w_x]
+```
+
+## Extract matches
+To extract the text of a match str_extract() 
+Example - 
+```{r}
+length(sentences)
+```
+```{r}
+head(sentences)
+```
+
+Find all sentences that contain a color & extract the color 
+```{r}
+colors <- c("red", "orange", "yellow", "green", "blue", "purple")
+color_match <- str_c(colors, collapse = " | ")
+color_match
+```
+
+```{r}
+has_color <- str_subset(sentences, color_match)
+matches <- str_extract(has_color, color_match)
+head(matches)
+```
+
+* str_extract() only extracts the first match
+```{r}
+more <- sentences[str_count(sentences, color_match) > 1]
+str_view_all(more, color_match)
+```
+```{r}
+str_extract(more, color_match)
+```
+
+* To get all matches, use str_extract_all()
+```{r}
+str_extract_all(more, color_match)
+```
+
+Use simplify = TRUE to return a matrix with short matches expanded to the same length as the longest
+
+```{r}
+x <- c("a", "a b", "a b c")
+str_extract_all(x, "[a-z]", simplify = TRUE)
+```
+
+### Exercises
+1. Modify regex to fix "flickered" match
+```{r}
+color_match_2 <- str_c("\\b(", str_c(colors, collapse = " | "), ")\\b")
+color_match_2
+```
+
+## Grouped matches
+Example - extract nouns from sentences
+```{r}
+noun <- "(a | the) ([^ ]+)"
+
+has_noun <- sentences %>% 
+    str_subset(noun) %>% 
+    head(10)
+has_noun %>% 
+    str_extract(noun)
+```
+
+str_match gives each individual component - returns a matrix with one column for complete match followed by one column for each group
+```{r}
+has_noun %>% 
+    str_match(noun)
+```
+
+If data is in a tibble - use tidyr::extract() 
+```{r}
+tibble(sentence = sentences) %>% 
+    tidyr::extract(
+        sentence, c("article", "noun"), "(a|the) ([^ ]+)",
+        remove = FALSE
+    )
+```
+
+### Exercises
+1. Find words that come after a number - pull out number and word
+```{r}
+number_word <- "\\b(one|two|three|four|five|six|seven|eight|nine|ten) +(\\w+)"
+sentences[str_detect(sentences, number_word)] %>% 
+    str_extract(number_word)
+```
+
+## Replacing matches
+Can replace matches with new strings 
+```{r}
+x <- c("apple", "pear", "banana")
+str_replace(x, "[aeiou]", "-")
+```
+```{r}
+str_replace_all(x, "[aeiou]", "-")
+
+```
+
+Perform multiple replacements by supplying a named vector
+```{r}
+x <- c("1 house", "2 cars", "3 people")
+str_replace_all(x, c("1" = "one", "2" = "two", "3" = "three"))
+```
+
+Use backreferences to insert components of the match
+Example - flip the order of the second and third words
+```{r}
+sentences %>% 
+  str_replace("([^ ]+) ([^ ]+) ([^ ]+)", "\\1 \\3 \\2") %>% 
+  head(5)
+```
+
+### Exercise
+1. Replace all forward slashes in a string with backslashes
+```{r}
+str_replace_all("a/b/c", "/", "\\\\")
+```
+
+## Splitting
+Use str_split() to split a string into pieces
+```{r}
+sentences %>% 
+    head(5) %>% 
+    str_split(" ")
+```
+
+When working with a length-1 vector - just extract first element of list
+```{r}
+"a|b|c|d" %>% 
+  str_split("\\|") %>% 
+  .[[1]]
+```
+
+* Use simplify = TRUE to return a matrix
+```{r}
+sentences %>%
+  head(5) %>% 
+  str_split(" ", simplify = TRUE)
+```
+
+* Request a max number of pieces
+```{r}
+fields <- c("Name: Hadley", "Country: NZ", "Age: 35")
+fields %>% str_split(": ", n = 2, simplify = TRUE)
+```
+
+Split up by character, line, sentence, word using boundary()s
+```{r}
+x <- "This is a sentence.  This is another sentence."
+str_view_all(x, boundary("word"))
+```
+```{r}
+str_split(x, " ")[[1]]
+```
+```{r}
+str_split(x, boundary("word"))[[1]]
+```
+
+### Exercises
+1. Split up a string into individual components 
+```{r}
+x <- c("apples, pears, and bananas")
+str_split(x, ", +(and +)?")[[1]]
+```

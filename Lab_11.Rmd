@@ -1,0 +1,237 @@
+---
+title: "Lab_11: Microbiome Analysis"
+author: Grace Lawson
+date: 11.9.2020
+output: html_document
+---
+
+## Load packages
+```{r}
+library(dada2)
+```
+
+# dada2 tutorial
+## Set up
+Download example data & unzip - paired-end fastq files 
+```{r}
+path <- "data/MiSeq_SOP" 
+list.files(path)
+```
+
+Read in the names of the fastq files & perform string manipulation to get matched lists of forward & reverse fastq files
+```{r}
+# Forward = R1, Reverse = R2
+fnFs <- sort(list.files(path, pattern = "_R1_001.fastq", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern = "_R2_001.fastq", full.names = TRUE))
+# Extract sample names, assume filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`,1)
+```
+
+## Inspect read quality profiles
+Start by visualizing quality profiles of forward reads
+```{r}
+plotQualityProfile(fnFs[1:2])
+```
+Graph -
+  * in gray-scale = heat map of frequency of each quality score at each base position
+  * green line = mean quality score at each position
+  * orange lines = quartiles of the quality score distribution
+  * red line = scaled proportion of reads that extend to at least that position (not         helpful for Illumina reads)
+These forward reads are good quality - do not need trimming of the last few nucleotides. We will truncate forward reads at position 240 (trimming last 10 nucleotides). 
+
+Visualize quality profile of reverse reads
+```{r}
+plotQualityProfile(fnRs[1:2])
+```
+These reverse reads are of significantly worse quality - especially at the end (common in Illumina sequencing). DADA2 incorporates quality info into error model - makes algorithm robust to lower quality sequence. Should trim reverse reads at position 160.
+
+## Filter & trim
+Assign filenames for the filtered fastq.gz files
+```{r}
+# Place filtered files in filtered/ subdirectory
+filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+names(filtFs) <- sample.names
+names(filtRs) <- sample.names
+```
+
+Use standard filtering parameters:
+  * maxN = 0
+  * truncQ = 2
+  * rm.phix = TRUE
+  * maxEE = 2 (sets max # of "expected errors" allowed in read)
+```{r}
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen = c(240, 160),
+                     maxN = 0, maxEE = c(2,2), truncQ = 2, rm.phix = TRUE,
+                     compress = TRUE, multithread = TRUE)
+head(out)
+```
+
+## Error rates
+```{r}
+errF <- learnErrors(filtFs, multithread = TRUE)
+```
+```{r}
+errR <- learnErrors(filtRs, multithread = TRUE)
+```
+```{r}
+plotErrors(errF, nominalQ = TRUE)
+```
+
+- points = observed error rates for each consensus quality score
+- black line = estimated error rates after convergence of machine-learning algorithm 
+- red line = error rates expected under nominal definition of Q-score
+
+## Sample interference
+```{r}
+dadaFs <- dada(filtFs, err = errF, multithread = TRUE)
+```
+```{r}
+dadaRs <- dada(filtRs, err = errR, multithread = TRUE)
+```
+```{r}
+dadaFs[[1]]
+```
+
+- DADA2 algorithm inferred 128 true sequence variants from 1979 unique sequences in first sample
+
+## Merge paired reads
+Merging is performed by aligning the de-noised forward reads with the reverse complement of corresponding de-noised reverse reads & constructing merged "contig" sequences. 
+- merged sequences are only output if forward & reverse reads overlap by at least 12 bases & are identical in overlap region
+
+```{r}
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose = TRUE)
+# Inspect merger data.frame from first sample
+head(mergers[[1]])
+```
+
+- mergers object is a list of data.frames from each sample
+  * each data.frame contains merged $sequence, its $abundance, indices of $forward & $reverse sequence variants that were merged
+- paired reads that did not exactly overlap were removed by mergePairs
+
+## Construct sequence table
+Can now construct amplicon sequence variant table (ASV) - higher resolution version of OTU table
+
+```{r}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab)
+```
+```{r}
+# Inspect distribution of sequence lengths 
+table(nchar(getSequences(seqtab)))
+```
+
+- sequence table is a matrix with rows corresponding to samples & columns corresponding to sequence variant
+- table contains 293 ASVs & lengths for merged sequences fall within expected range
+
+## Remove chimeras
+dada method corrects substitution & indel errors but not chimeras. Accurancy of sequence variants after de-nosing makes IDing chimeras easier.
+- chimeras are IDed if they can be exactly reconstructed by combining left-segment & right-segment from 2 more abundant parent sequences
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method = "consensus", multithread = TRUE, verbose = TRUE)
+dim(seqtab.nochim)
+```
+```{r}
+sum(seqtab.nochim)/sum(seqtab)
+```
+- chimeras make up about 21% of merged sequence variants, about 4% of merged sequence reads
+
+## Track reads through pipeline
+Check the number of reads that make it through each step in the pipeline
+
+```{r}
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+head(track)
+
+```
+- kept majority of raw reads, no large drop between steps
+
+## Assign taxonomy
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "data/silva_nr99_v138_train_set.fa.gz", multithread = TRUE)
+```
+
+```{r}
+taxa.print <- taxa
+rownames(taxa.print) <- NULL
+head(taxa.print)
+```
+
+## Evaluate accuracy
+```{r}
+unqs.mock <- seqtab.nochim["Mock",]
+unqs.mock <- sort(unqs.mock[unqs.mock>0], decreasing = TRUE)
+cat("DADA2 inferred", length(unqs.mock), "sample sequences present in the Mock community.\n")
+```
+```{r}
+mock.ref <- getSequences(file.path(path, "HMP_MOCK.v35.fasta"))
+match.ref <- sum(sapply(names(unqs.mock), function(x) any(grepl(x, mock.ref))))
+cat("Of those,", sum(match.ref), "were exact matches to the expected reference sequences.\n")
+```
+
+# phlyoseq tutorial
+```{r}
+library(phyloseq)
+library(DECIPHER)
+library(Biostrings)
+library(ggplot2)
+```
+
+```{r}
+theme_set(theme_bw())
+```
+
+```{r}
+samples.out <- rownames(seqtab.nochim)
+subject <- sapply(strsplit(samples.out, "D"), `[`, 1)
+gender <- substr(subject,1,1)
+subject <- substr(subject,2,999)
+day <- as.integer(sapply(strsplit(samples.out, "D"), `[`, 2))
+samdf <- data.frame(Subject=subject, Gender=gender, Day=day)
+samdf$When <- "Early"
+samdf$When[samdf$Day>100] <- "Late"
+rownames(samdf) <- samples.out
+```
+
+```{r}
+ps <- phyloseq(otu_table(seqtab.nochim, taxa_are_rows=FALSE), 
+               sample_data(samdf), 
+               tax_table(taxa))
+ps <- prune_samples(sample_names(ps) != "Mock", ps) # Remove mock sample
+```
+
+```{r}
+dna <- Biostrings::DNAStringSet(taxa_names(ps))
+names(dna) <- taxa_names(ps)
+ps <- merge_phyloseq(ps, dna)
+taxa_names(ps) <- paste0("ASV", seq(ntaxa(ps)))
+ps
+```
+
+Visualize alpha-diversity
+```{r}
+plot_richness(ps, x="Day", measures=c("Shannon", "Simpson"), color="When")
+```
+### Ordinate
+```{r}
+# Transform data to proportions as appropriate for Bray-Curtis distances
+ps.prop <- transform_sample_counts(ps, function(otu) otu/sum(otu))
+ord.nmds.bray <- ordinate(ps.prop, method="NMDS", distance="bray")
+```
+
+```{r}
+plot_ordination(ps.prop, ord.nmds.bray, color="When", title="Bray NMDS")
+```
+
+### Bar plot
+```{r}
+top20 <- names(sort(taxa_sums(ps), decreasing=TRUE))[1:20]
+ps.top20 <- transform_sample_counts(ps, function(OTU) OTU/sum(OTU))
+ps.top20 <- prune_taxa(top20, ps.top20)
+plot_bar(ps.top20, x="Day", fill="Family") + facet_wrap(~When, scales="free_x")
+```
+

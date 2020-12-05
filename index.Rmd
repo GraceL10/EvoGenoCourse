@@ -35,7 +35,12 @@ bibliography: references.bib
   [Lab 9a: Regular Expressions](Lab_9a.html)
   
   [Lab 9x: Control Structures and Functions](Lab_9b.html) 
-
+  
+  [Lab 10: Population genomics](Lab_10.html)
+  
+  [Lab 11: Microbiome analysis](Lab_11.html)
+  
+  [Lab 12: Network analysis](Lab_12.html)
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 

@@ -40,8 +40,6 @@ bibliography: references.bib
   
   [Lab 11: Microbiome analysis](Lab_11.html)
   
-  [Lab 12: Network analysis](Lab_12.html)
-  
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 

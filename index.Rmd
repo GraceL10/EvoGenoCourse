@@ -3,12 +3,15 @@ title: "Index"
 author: "Grace Lawson"
 date: "Fall 2020"
 output: 
-  html_document:
-    theme: cerulean 
+   prettydoc::html_pretty:
+    theme: architect
+    highlight: github 
 bibliography: references.bib
 ---
 
-# Labs  
+# Evolutionary Genomics and Bioinformatics
+
+## Labs  
 
   [Lab 1](Lawson_Lab1.html)
 
@@ -41,6 +44,8 @@ bibliography: references.bib
   [Lab 11: Microbiome analysis](Lab_11.html)
   
   [Lab 12: Network analysis](Lab_12.html)
+  
+  [Lab 13: Sprucing up Rmarkdown](Lab_13.html)
 
 Application written in R [@RCoreTeam] using the Shiny framework [@Chang2015].
 
